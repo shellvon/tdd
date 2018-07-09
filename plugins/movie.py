@@ -3,6 +3,9 @@
 import re
 import requests
 
+__plugin__ = '检索'
+__description__ = '输入检索 <电影资源名/番号> 进行查询'
+
 # current plugin priority. optional. default is 0
 PRIORITY = 10
 

@@ -3,6 +3,9 @@
 
 import re
 
+__plugin__ = 'hello_world'
+__description__ = '发送hello,回复你好呀'
+
 HELLO_REGEX = re.compile('^hello$', re.I)
 
 # current plugin priority. optional. default is 0

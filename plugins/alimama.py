@@ -9,17 +9,25 @@ from os import path
 import requests
 
 pdir = path.dirname(path.dirname(path.abspath(__file__)))
-print pdir
+
 sys.path.insert(0, pdir)
 
 from setting import TB_COOKIE_STR
+
+
+__plugin__ = '优惠券'
+__description__ = '将商品消息发送至公众号'
 
 
 def match(msg, bot=None):
     if msg.type != 'text':
         return False
     content = msg.content
-    return parse_tb_token(content, only_valid=True)
+    return parse_tb_token(content, only_verify=True)
+
+
+def bootstrap(bot=None):
+    pass
 
 
 def parse_tb_token(content, only_verify=False):

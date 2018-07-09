@@ -2,10 +2,26 @@
 
 import re
 
+__plugin__ = 'help'
+__description__ = '输入帮助/文档等关键词查看帮助信息'
+
 REGEX = re.compile(u'^(help|帮助|菜单|功能|文档)$', re.I | re.U)
 
 # current plugin priority. optional. default is 0
 PRIORITY = 1
+
+all_plugins_info = []
+
+
+def bootstrap(bot=None):
+    if not hasattr(bot, 'plugins'):
+        return
+    global all_plugins_info
+    all_plugins_info = [
+        {
+            'plugin': getattr(p, '__plugin__', ''),
+            'desc': getattr(p, '__description__', 'Unknown')
+        } for p in bot.plugins]
 
 
 def match(msg):
@@ -13,12 +29,6 @@ def match(msg):
 
 
 def response(msg, bot=None):
-    funcs = [
-        u'目前支持以下指令:',
-        u'查看本文帮助: 输入 help|帮助|菜单|功能|文档 任意一个关键词',
-        u'查找电影资源: 检索 <电影名/番号>',
-        u'聊天/查看天气: 直接与我聊天即可',
-        u'寻找优惠券: 淘宝分享给我(此功能已关闭)',
-        u'智能识图: 发送图片给我,'
-    ]
-    return u'\n'.join(funcs)
+    global all_plugins_info
+    plugins = '\n'.join(['插件:{name}\n描述:{desc}' for p in all_plugins_info])
+    return '您好,目前我们支持的功能插件有:\n%s' % plugins
