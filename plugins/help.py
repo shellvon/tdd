@@ -30,5 +30,5 @@ def match(msg):
 
 def response(msg, bot=None):
     global all_plugins_info
-    plugins = '\n'.join(['插件:{name}\n描述:{desc}' for p in all_plugins_info])
+    plugins = '\n\n'.join(['插件:{plugin}\n描述:{desc}'.format(**p) for p in all_plugins_info])
     return '您好,目前我们支持的功能插件有:\n%s' % plugins

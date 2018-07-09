@@ -28,8 +28,8 @@ class AI(object):
     def _bootstrap_plugins(self):
         for plugin in self.plugins:
             if hasattr(plugin, 'bootstrap'):
-                logging.debug('plugin:%s has bootstrap', plugin)
                 plugin.bootstrap(bot=self)
+                logging.debug('%s triggered bootstrap', plugin.__name__)
 
     def nlp_chat(self, user, message):
         resp = self.ai.nlp_chat(user, message)
@@ -41,7 +41,7 @@ class AI(object):
     def response(self, msg):
         for plugin in self.plugins:
             if plugin.match(msg):
-                logging.debug('plugin:%s matched the msg: %s', plugin, msg)
+                logging.debug('%s matched the msg: %s', plugin.__name__, msg)
                 return plugin.response(msg, bot=self)
         logging.debug('No plugin matched.')
         if msg.type == 'text':

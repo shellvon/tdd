@@ -34,14 +34,13 @@ def parse_tb_token(content, only_verify=False):
     patt = u'【(?P<title>.+?)】(?P<url>http://[^ ]+)?.*(?P<token>(€)[a-zA-Z\d]+\\4)'
     matched = re.search(patt, content, re.U | re.I | re.X)
     if only_verify:
-        return matched is None
+        return matched is not None
     if not matched:
         return
     # extract more details.
     info = matched.groupdict()
     if info['url'] is None:
         info['url'] = get_short_link_by_token(info['token'])
-    print info
     item_id = get_item_id_from_short_link(info['url'])
     info['url'] = 'https://detail.tmall.com/item.htm?id=%s' % item_id
     return info

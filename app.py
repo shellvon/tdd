@@ -18,6 +18,11 @@ from setting import (
 )
 
 
+logging.basicConfig(level=logging.DEBUG,
+                    format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
+                    datefmt='%H:%M:%S')
+
+
 def create_app(config_file):
     app = Flask(__name__)
     app.config.from_object(config_file)
@@ -54,7 +59,6 @@ def wechat():
 
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
     app.run(host=app.config.get('HOST'))
 
 
