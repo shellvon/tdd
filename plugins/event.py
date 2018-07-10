@@ -7,7 +7,7 @@ __description__ = '处理各类型的事件(关注/取消关注/点击/拍照)'
 PRIORITY = 10
 
 
-def match(msg):
+def match(msg, bot=None):
     return msg.type == 'event'
 
 
@@ -24,4 +24,3 @@ def response(msg, bot=None):
         key = msg.key
         return u'您点击了:%s' % key
     return u'暂时不支持此事件: %s' % event
-

@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 
-import os
 import urllib
 import importlib
 import pkgutil
@@ -24,7 +23,24 @@ def load_plugins(namespace):
     return sorted(available_plugins, key=lambda x: getattr(x, 'PRIORITY', 0), reverse=True)
 
 
+def enum(**kwargs):
+    return type('Enum', (), kwargs)
+
+
 class AI(object):
+    COMMANDS = enum(
+        EXIT='exit',  # 退出
+        CHAT='nlp_chat',  # 聊天
+        AGE='face_age',  # 颜龄
+        STICKER='face_sticker',  # 大头贴
+        MERGE='face_merge',  # 人脸融合
+        DECORATION='face_decoration',  # 变妆
+        COSMETIC='face_cosmetic',  # 美妆
+        FILTER='image_filter',  # 滤镜
+        IMG_TO_TEXT='img_to_text',  # 看图说话
+        MENU='menus',  # 菜单.
+    )
+
     def __init__(self, api_id, api_key, plugins):
         self.plugins = plugins
         self.ai = AiPlat(api_id, api_key)
@@ -40,20 +56,18 @@ class AI(object):
     def wechat_client(self, client):
         self.client = client
 
-
-
     def _bootstrap_plugins(self):
         for plugin in self.plugins:
             if hasattr(plugin, 'bootstrap'):
                 plugin.bootstrap(bot=self)
                 logging.debug('%s triggered bootstrap', plugin.__name__)
 
-    def nlp_chat(self, user, message):
-        resp = self.ai.nlp_chat(user, message)
+    def nlp_chat(self, msg):
+        """普通的文本聊天"""
+        resp = self.ai.nlp_chat(msg.source, msg.content)
         if resp['ret'] == 0:
             return resp['data']['answer']
-        logging.error(resp)
-        return u'Sorry, 系统内部错了,错误代码: %s' % resp['msg']
+        return u'Sorry, 系统内部错了,错误信息: %s' % resp['msg']
 
     def get_current_img(self, msg):
         if msg.type != 'image':
@@ -97,41 +111,39 @@ class AI(object):
         resp = self.ai.ptu_faceage(img)
         return self.image_resp(msg, resp)
 
-    def face_sticker(self, msg):
-        # 获取当前的步骤.
-        _filter = self.cache.get(msg.source + '_filter')
-        if _filter is None or msg.type != 'text':
-            return u'选择你需要的【大头贴】效果:\n 1.NewDay, 2. Enjoy\n'
+    def reply_help_img(self, msg, file):
+        mid = self._media_upload(media_file=file)
+        return ImageReply(
+            media_id=mid,
+            message=msg
+        )
 
+    def face_sticker(self, msg):
+        if msg.type != 'text' or not msg.content.isdigit():
+            return self.reply_help_img(msg, file='data/sticker.png')
         img = self.get_current_img(msg)
-        resp = self.ai.ptu_facesticker(img, _filter)
+        resp = self.ai.ptu_facesticker(img, msg.content)
         return self.image_resp(msg, resp)
 
     def face_merge(self, msg):
-        # 获取当前的步骤.
-        _filter = self.cache.get(msg.source + '_filter')
-        if _filter is None or msg.type != 'text':
-            return u'选择你需要的特效(回复:1-50)'
+        if msg.type != 'text' or not msg.content.isdigit():
+            return self.reply_help_img(msg, file='data/merge.png')
         img = self.get_current_img(msg)
-        resp = self.ai.ptu_facemerge(img, _filter)
+        resp = self.ai.ptu_facemerge(img, msg.content)
         return self.image_resp(msg, resp)
 
     def face_decoration(self, msg):
-        # 获取当前的步骤.
-        _filter = self.cache.get(msg.source + '_filter')
-        if _filter is None or msg.type != 'text':
+        if msg.type != 'text' or not msg.content.isdigit():
             return u'选择你需要的特效(回复:1-23)'
         img = self.get_current_img(msg)
-        resp = self.ai.ptu_facedecoration(img, _filter)
+        resp = self.ai.ptu_facedecoration(img, msg.content)
         return self.image_resp(msg, resp)
 
     def face_cosmetic(self, msg):
-        # 获取当前的步骤.
-        _filter = self.cache.get(msg.source + '_filter')
-        if _filter is None or msg.type != 'text':
-            return u'选择你需要的特效(回复:1-)'
+        if msg.type != 'text' or not msg.content.isdigit():
+            return u'选择你需要的美妆(回复:1-23)'
         img = self.get_current_img(msg)
-        resp = self.ai.ptu_facecosmetic(img, _filter)
+        resp = self.ai.ptu_facecosmetic(img, msg.content)
         return self.image_resp(msg, resp)
 
     def img_to_text(self, msg):
@@ -140,20 +152,15 @@ class AI(object):
         return self.image_resp(msg, resp)
 
     def img_filter(self, msg):
-        _filter = self.cache.get(msg.source + '_filter')
-        if _filter is None or msg.type != 'text':
+        if msg.type != 'text' or not msg.content.isdigit():
             return u'选择你需要的【滤镜】效果(1-20):'
         img = self.get_current_img(msg)
-        resp = self.ai.ptu_imagefilter(img, _filter)
+        resp = self.ai.ptu_imagefilter(img, msg.content)
         return self.image_resp(msg, resp)
 
     def exit(self, msg):
-        self.cache.delete(msg.source)
-        return u'👌'
-
-    def img_fight(self, msg):
-        self.cache.delete(msg.source)
-        return u'暂时不支持斗图'
+        self.cache.clear()
+        return u'已成功退出👌 欢迎下次再聊'
 
     @staticmethod
     def create_resp(resp, msg=None):
@@ -167,64 +174,63 @@ class AI(object):
             reply = create_reply('我晕了～', msg)
         return reply.render()
 
+    def parse_command(self, msg):
+        # 查看当前是不是需要退出.
+        if msg.type == 'text' and msg.content == u'退出':
+            return self.COMMANDS.EXIT
+        # 查看之前是否设置了命令.
+        command = self.cache.get(msg.source)
+        if command:
+            return command
+
+        command = self.COMMANDS.CHAT
+        if msg.type == 'text':
+            content = msg.content.lower()
+            if content == u'颜龄' or content == 'age':
+                command = self.COMMANDS.AGE
+            elif content == u'大头贴' or content == 'sticker':
+                command = self.COMMANDS.STICKER
+            elif content == u'人脸融合' or content == 'merge':
+                command = self.COMMANDS.MERGE
+            elif content == u'聊天' or content == 'chat':
+                command = self.COMMANDS.CHAT
+        if msg.type == 'image':
+            command = self.COMMANDS.MENU
+
+        # 记录下来当前的命令.
+        self.cache.set(msg.source, command)
+        return command
+
+    def menus(self, msg):
+        """菜单,当用户发送图片来的时候默认激发此菜单"""
+        if msg.type == 'image':
+            self.cache.set(msg.source + '_img_url', msg.image)
+        menus = [
+            u'* 颜龄 : 查看您的年龄',
+            u'* 看图说话 : AI识别图的内容',
+            u'* 大头贴 : 选择数字(1-30)的一种大头贴特效'
+            u'* 滤镜 : 为您的照片增加一层滤镜',
+            u'* 人脸融合 : 古装/科幻等特效(特效支持1-50的范围)',
+            u'* 退出 : 退出上下文',
+        ]
+        return self.create_resp(u'收到一张图,你是要我做什么呢?\n\n%s' % ('\n'.join(menus)), msg)
+
     def response(self, request):
         msg = parse_message(request.data)
         for plugin in self.plugins:
-            if plugin.match(msg):
+            if plugin.match(msg, bot=self):
                 logging.debug('%s matched the msg: %s', plugin.__name__, msg)
                 resp = plugin.response(msg, bot=self)
                 if resp:
                     return resp
                 logging.debug('消息没有返回,跳过用此插件(%s)处理', plugin.__name__)
 
-
-        # 没有设置Command
-        commands = {
-            u'颜龄': self.face_age,
-            u'大头贴': self.face_sticker,
-            u'人脸融合': self.face_merge,
-            u'滤镜': self.img_filter,
-            u'人脸变妆': self.face_decoration,
-            u'人脸美妆': self.face_cosmetic,
-            u'看图说话': self.img_to_text,
-            u'退出': self.exit,
-            u'斗图': self.img_fight,
-        }
-
-        func_name = self.cache.get(msg.source)
-        # 尝试从缓存中读到上一次的时间.
-        command = commands.get(func_name)
-        if command:
-            return self.create_resp(command(msg), msg)
-
-        if msg.type == 'text':
-            command = commands.get(msg.content)
-            # 如果当前环境没有指定command,则是聊天
-            if not command:
-                resp = self.nlp_chat(msg.source, msg.content)
-            else:
-                # 设置的当前的Command
-                self.cache.set(msg.source, msg.content)
-                resp = command(msg)
-            return self.create_resp(resp, msg)
-
-        if msg.type == 'image':
-            # 记录当前的图片
-            self.cache.set(msg.source+'_img_url', msg.image)
-            infos = [
-                '* 颜龄 : 查看您的年龄',
-                '* 看图说话 : AI识别图的内容',
-                '* 大头贴 : 选择数字(1-30)的一种大头贴特效'
-                '* 滤镜 : 为您的照片增加一层滤镜',
-                '* 人脸融合 : 古装/科幻等特效(特效支持1-50的范围)',
-                '* 退出 : 退出上下文',
-                '* 斗图 : 你懂的'
-            ]
-            return self.create_resp(u'收到一张图,你是要我做什么呢?\n\n %s' % ('\n'.join(infos)), msg)
-
-        return self.create_resp(u'不支持的消息类型: %s' % msg.type, msg)
+        command = self.parse_command(msg)
+        reply = getattr(self, command, self.nlp_chat)(msg)
+        return self.create_resp(reply, msg)
 
 
 if __name__ == '__main__':
     import plugins as p
+
     print 'loaded plugins:', load_plugins(p)

@@ -24,7 +24,7 @@ def bootstrap(bot=None):
         } for p in bot.plugins]
 
 
-def match(msg):
+def match(msg, bot=None):
     return msg.type == 'text' and REGEX.match(msg.content)
 
 

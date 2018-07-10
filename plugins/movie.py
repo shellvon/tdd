@@ -10,7 +10,7 @@ __description__ = '输入检索 <电影资源名/番号> 进行查询'
 PRIORITY = 10
 
 
-def match(msg):
+def match(msg, bot=None):
     if msg.type != 'text':
         return False
     data = msg.content.split(' ')

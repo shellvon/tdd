@@ -12,7 +12,7 @@ HELLO_REGEX = re.compile('^hello$', re.I)
 PRIORITY = 10
 
 
-def match(msg):
+def match(msg, bot=None):
     return msg.type == 'text' and HELLO_REGEX.match(msg.content)
 
 

@@ -30,6 +30,7 @@ wechat_client = WeChatClient(setting.WECHAT_APP_ID, setting.WECHAT_APP_SECRET)
 # WTF.
 bot.wechat_client = wechat_client
 
+
 @app.route('/wechat-bot', methods=['GET', 'POST'])
 def wechat():
     sign = request.args.get('signature', '')
