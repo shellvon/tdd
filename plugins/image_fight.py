@@ -67,7 +67,7 @@ def response(msg, bot=None):
             # 退出斗图.
             bot.cache.clear()
         return u'我败了,无图可战'
-    mid = bot.wechat_client.meida.upload(media_file=result)
+    mid = bot.wechat_client.media.upload(media_type='image', media_file=result)
     return ImageReply(message=msg, media_id=mid).render()
 
 
