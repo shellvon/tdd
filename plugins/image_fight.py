@@ -6,6 +6,8 @@ import requests
 
 
 from wechatpy.replies import ImageReply
+from wechatpy.exceptions import WeChatClientException
+
 __plugin__ = '斗图'
 __description__ = '输入斗图 <关键词> 返回图片地址供您下载'
 
@@ -67,8 +69,12 @@ def response(msg, bot=None):
             # 退出斗图.
             bot.cache.clear()
         return u'我败了,无图可战'
-    mid = bot.wechat_client.media.upload(media_type='image', media_file=result)
-    return ImageReply(message=msg, media_id=mid).render()
+    try:
+        result = bot.wechat_client.media.upload(media_type='image', media_file=result)
+        mid = result['media_id']
+        return ImageReply(message=msg, media_id=mid).render()
+    except WeChatClientException, e:
+        return u'我败了.....'
 
 
 if __name__ == '__main__':
