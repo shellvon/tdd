@@ -181,6 +181,11 @@ class AI(object):
         return reply.render()
 
     def parse_command(self, msg):
+
+        # 优先检查是否需要退出.
+        if msg.type == 'text' and (msg.content.lower() in ['exit', u'退出']):
+            return self.COMMANDS.EXIT
+
         command = self.cache.get(msg.source)
         if command:
             logging.debug('command from history(cached): %s', command)
@@ -199,7 +204,7 @@ class AI(object):
                 command = self.COMMANDS.CHAT
             elif content == u'看图说话' or content == 'img2text':
                 command = self.COMMANDS.IMG_TO_TEXT
-            elif command == u'退出' or content == 'exit':
+            elif content == u'退出' or content == 'exit':
                 command = self.COMMANDS.EXIT
         elif msg.type == 'image':
             command = self.COMMANDS.MENU

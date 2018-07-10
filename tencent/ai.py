@@ -141,7 +141,7 @@ class AiPlat(object):
     def _parse_resp(self, resp):
         code = resp['ret']
         if code != 0:
-            resp['msg'] = self.code_to_msg(code)
+            resp['msg'] = self.code_to_msg(code).decode('utf-8')  # to Unicode.
         return resp
 
     def invoke(self, data=None):
