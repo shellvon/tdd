@@ -27,8 +27,8 @@
 一个插件十分相关，只需要实现俩个方法即可:
 
 
-** match(msg: wechatpy.messages.BaseMessage, bot:bot.AI) **
-** response(msg: wechatpy.messages, bot:bot.AI) **
++ ** match(msg: wechatpy.messages.BaseMessage, bot:bot.AI) **
++ ** response(msg: wechatpy.messages, bot:bot.AI) **
 
 一个简单的例子参见:[plugins/hello.py](./plugins/hello.py)
 

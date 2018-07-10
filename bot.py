@@ -1,9 +1,11 @@
 # -*- coding:utf-8 -*-
 
+import base64
 import urllib
 import importlib
 import pkgutil
 import logging
+from cStringIO import StringIO
 
 from wechatpy import parse_message, create_reply
 from wechatpy.replies import ImageReply, BaseReply
@@ -64,6 +66,9 @@ class AI(object):
 
     def nlp_chat(self, msg):
         """普通的文本聊天"""
+        if msg.type != 'text':
+            return u'无法处理此消息类型:<%s>' % msg.type
+
         resp = self.ai.nlp_chat(msg.source, msg.content)
         if resp['ret'] == 0:
             return resp['data']['answer']
@@ -84,18 +89,17 @@ class AI(object):
         try:
             r = self.wechat_client.media.upload(media_file=media_file, media_type=media_type)
             return r['media_id']
-        except Exception:
+        except Exception, e:
+            logging.error('upload image failed! => %s', e)
             return
 
     def image_resp(self, msg, resp):
         if resp['ret'] == 0:
-            from cStringIO import StringIO
-            import base64
-            file_obj = StringIO(base64.b64decode(base64))
+            file_obj = StringIO(base64.b64decode(resp['data']['image']))
             # https://stackoverflow.com/questions/26300054/set-name-header-of-multipart-encoded-file-post
             mid = self._media_upload(media_file=('tmp.jpg', file_obj))
             if not mid:
-                return create_reply('系统暂时不能处理此格式的图,请尝试其他图', msg)
+                return create_reply('系统暂时不能处理此格式的图,请尝试其他图!', msg)
             reply = ImageReply(
                 media_id=mid,
                 message=msg
@@ -103,7 +107,7 @@ class AI(object):
             # 本次步骤已经结束了,删除当前指令
             self.cache.delete(msg.source)
         else:
-            reply = create_reply(resp['msg'], msg)
+            reply = create_reply(u'%s, 重新上传一张图试试吧!' %resp['msg'], msg)
         return reply
 
     def face_age(self, msg):
@@ -113,6 +117,8 @@ class AI(object):
 
     def reply_help_img(self, msg, file):
         mid = self._media_upload(media_file=file)
+        if not mid:
+            return u'请回复你要的特效编号:1-30'
         return ImageReply(
             media_id=mid,
             message=msg
@@ -120,28 +126,28 @@ class AI(object):
 
     def face_sticker(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
-            return self.reply_help_img(msg, file='data/sticker.png')
+            return self.reply_help_img(msg, file=open('data/sticker.png', 'rb'))
         img = self.get_current_img(msg)
         resp = self.ai.ptu_facesticker(img, msg.content)
         return self.image_resp(msg, resp)
 
     def face_merge(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
-            return self.reply_help_img(msg, file='data/merge.png')
+            return self.reply_help_img(msg, file=open('data/merge.png', 'rb'))
         img = self.get_current_img(msg)
         resp = self.ai.ptu_facemerge(img, msg.content)
         return self.image_resp(msg, resp)
 
     def face_decoration(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
-            return u'选择你需要的特效(回复:1-23)'
+            return self.reply_help_img(msg, file=open('data/decoration.png', 'rb'))
         img = self.get_current_img(msg)
         resp = self.ai.ptu_facedecoration(img, msg.content)
         return self.image_resp(msg, resp)
 
     def face_cosmetic(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
-            return u'选择你需要的美妆(回复:1-23)'
+            return self.reply_help_img(msg, file=open('data/cosmetic.png', 'rb'))
         img = self.get_current_img(msg)
         resp = self.ai.ptu_facecosmetic(img, msg.content)
         return self.image_resp(msg, resp)
@@ -153,7 +159,7 @@ class AI(object):
 
     def img_filter(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
-            return u'选择你需要的【滤镜】效果(1-20):'
+            return self.reply_help_img(msg, file=open('data/filter.png', 'rb'))
         img = self.get_current_img(msg)
         resp = self.ai.ptu_imagefilter(img, msg.content)
         return self.image_resp(msg, resp)
@@ -181,6 +187,7 @@ class AI(object):
         # 查看之前是否设置了命令.
         command = self.cache.get(msg.source)
         if command:
+            logging.debug('command from history(cached): %s', command)
             return command
 
         command = self.COMMANDS.CHAT
@@ -199,12 +206,15 @@ class AI(object):
 
         # 记录下来当前的命令.
         self.cache.set(msg.source, command)
+        logging.debug('God command:%s from msg:%s', command, msg)
         return command
 
     def menus(self, msg):
         """菜单,当用户发送图片来的时候默认激发此菜单"""
+        resp = ''
         if msg.type == 'image':
             self.cache.set(msg.source + '_img_url', msg.image)
+            resp = u'收到一张图，'
         menus = [
             u'* 颜龄 : 查看您的年龄',
             u'* 看图说话 : AI识别图的内容',
@@ -213,7 +223,9 @@ class AI(object):
             u'* 人脸融合 : 古装/科幻等特效(特效支持1-50的范围)',
             u'* 退出 : 退出上下文',
         ]
-        return self.create_resp(u'收到一张图,你是要我做什么呢?\n\n%s' % ('\n'.join(menus)), msg)
+        # 菜单功能正常结束.
+        self.cache.delete(msg.source)
+        return u'%s你是要我做什么呢?\n\n%s' % (resp, '\n'.join(menus))
 
     def response(self, request):
         msg = parse_message(request.data)
