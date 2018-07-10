@@ -66,6 +66,7 @@ class AI(object):
 
     def nlp_chat(self, msg):
         """普通的文本聊天"""
+        self.cache.delete(msg.source)
         if msg.type != 'text':
             return u'无法处理此消息类型:<%s>' % msg.type
 

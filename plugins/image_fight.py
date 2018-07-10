@@ -9,7 +9,7 @@ from wechatpy.replies import ImageReply
 from wechatpy.exceptions import WeChatClientException
 
 __plugin__ = '斗图'
-__description__ = '输入斗图 <关键词> 返回图片地址供您下载'
+__description__ = '输入<斗图> 或者<斗图 关键词> 开启斗图(用户可回复图/文字),如果不玩了请输入<exit>'
 
 REGEX = re.compile(u'^斗图(\s\S+)?$', re.I | re.U)
 
