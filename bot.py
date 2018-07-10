@@ -156,7 +156,9 @@ class AI(object):
     def img_to_text(self, msg):
         img = self.get_current_img(msg)
         resp = self.ai.vision_image(img, msg.source)
-        return self.image_resp(msg, resp)
+        text = resp['data']['text'] if resp['ret'] == 0 else resp['msg']
+        self.cache.delete(msg.source)
+        return text
 
     def img_filter(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
@@ -224,7 +226,7 @@ class AI(object):
         menus = [
             u'* 颜龄 : 查看您的年龄',
             u'* 看图说话 : AI识别图的内容',
-            u'* 大头贴 : 选择数字(1-30)的一种大头贴特效'
+            u'* 大头贴 : 选择数字(1-30)的一种大头贴特效',
             u'* 滤镜 : 为您的照片增加一层滤镜',
             u'* 人脸融合 : 古装/科幻等特效(特效支持1-50的范围)',
             u'* 退出 : 退出上下文',
