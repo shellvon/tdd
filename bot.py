@@ -47,7 +47,7 @@ class AI(object):
         self.plugins = plugins
         self.ai = AiPlat(api_id, api_key)
         self._bootstrap_plugins()
-        self.cache = FileSystemCache('/tmp')
+        self.cache = FileSystemCache('/tmp/wechat-bot-cache')
         self.client = None
 
     @property
@@ -165,8 +165,8 @@ class AI(object):
         return self.image_resp(msg, resp)
 
     def exit(self, msg):
-        self.cache.clear()
-        return u'已成功退出👌 欢迎下次再聊'
+        r = self.cache.clear()
+        return u'已退出👌 欢迎下次再聊!(code: %s)' % r
 
     @staticmethod
     def create_resp(resp, msg=None):
@@ -181,10 +181,6 @@ class AI(object):
         return reply.render()
 
     def parse_command(self, msg):
-        # 查看当前是不是需要退出.
-        if msg.type == 'text' and msg.content == u'退出':
-            return self.COMMANDS.EXIT
-        # 查看之前是否设置了命令.
         command = self.cache.get(msg.source)
         if command:
             logging.debug('command from history(cached): %s', command)
@@ -201,7 +197,11 @@ class AI(object):
                 command = self.COMMANDS.MERGE
             elif content == u'聊天' or content == 'chat':
                 command = self.COMMANDS.CHAT
-        if msg.type == 'image':
+            elif content == u'看图说话' or content == 'img2text':
+                command = self.COMMANDS.IMG_TO_TEXT
+            elif command == u'退出' or content == 'exit':
+                command = self.COMMANDS.EXIT
+        elif msg.type == 'image':
             command = self.COMMANDS.MENU
 
         # 记录下来当前的命令.

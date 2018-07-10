@@ -63,8 +63,11 @@ def response(msg, bot=None):
         keyword = msg.content.replace(u'斗图', '').strip()
     result = search(keyword)
     if not result or not bot:
+        if bot:
+            # 退出斗图.
+            bot.cache.clear()
         return u'我败了,无图可战'
-    mid = bot.wechat_client.upload(media_file=result)
+    mid = bot.wechat_client.meida.upload(media_file=result)
     return ImageReply(message=msg, media_id=mid).render()
 
 
