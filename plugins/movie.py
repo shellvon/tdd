@@ -23,8 +23,6 @@ def search(keywords):
     resp = requests.get('%s/%s/1' % (api, keywords), headers={
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0'}).content
     result = re.findall(regex, resp)
-    if not result:
-        print resp
     return result[:3] if result else []
 
 

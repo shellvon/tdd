@@ -72,7 +72,7 @@ def response(msg, bot=None):
     try:
         result = bot.wechat_client.media.upload(media_type='image', media_file=result)
         mid = result['media_id']
-        return ImageReply(message=msg, media_id=mid).render()
+        return ImageReply(message=msg, media_id=mid)
     except WeChatClientException, e:
         return u'我败了.....'
 

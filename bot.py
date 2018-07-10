@@ -239,7 +239,7 @@ class AI(object):
                 logging.debug('%s matched the msg: %s', plugin.__name__, msg)
                 resp = plugin.response(msg, bot=self)
                 if resp:
-                    return resp
+                    return self.create_resp(resp, msg)
                 logging.debug('消息没有返回,跳过用此插件(%s)处理', plugin.__name__)
 
         command = self.parse_command(msg)
