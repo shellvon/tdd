@@ -19,6 +19,24 @@
 
 + Python2.7 ( With wechatpy + requests + flask )
 
+目前机器人核心代码放在 [bot.py](./bot.py) 下，引入函数注册机制.(注册的函数总是显示在菜单的最后面,却一个cmd_type只能有一个回调函数)
+
+```
+import sys
+
+this_module = sys.modules[__name__]
+bot = AI('your_app_id', 'your_app_key', your_plugins)
+bot.register_cmd('cmd_name',
+                 CommandItem(desc='描述此命令做什么的,将会在菜单中展示', re='触发的正则表达式,',
+                             method=(this_module, 'hello')))))
+
+# method即指定触发的回调函数,格式为tuple, 此删除用于getattr(*method), 其格式为(obj, attr, default) 其中default为可选.
+cmd = ai.parse_command(msg)
+ai.unregister_cmd('cmd_name') # 取消注册
+print cmd
+
+```
+
 # 插件机制
 
 机器人相关源代码放在 `bot.py`，本质上是调用 腾讯AI 进行瞎聊。为了支持微信的 **自动回复** 功能, 因此引入了插件机制。

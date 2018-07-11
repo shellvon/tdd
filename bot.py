@@ -1,11 +1,14 @@
 # -*- coding:utf-8 -*-
 
+import re
 import base64
 import urllib
 import importlib
 import pkgutil
 import logging
+from enum import Enum
 from cStringIO import StringIO
+from collections import namedtuple, OrderedDict
 
 from wechatpy import parse_message, create_reply
 from wechatpy.replies import ImageReply, BaseReply
@@ -25,30 +28,81 @@ def load_plugins(namespace):
     return sorted(available_plugins, key=lambda x: getattr(x, 'PRIORITY', 0), reverse=True)
 
 
-def enum(**kwargs):
-    return type('Enum', (), kwargs)
+CommandItem = namedtuple('CommandItem', ['re', 'method', 'desc'])
+
+
+class LogicException(Exception):
+    pass
 
 
 class AI(object):
-    COMMANDS = enum(
-        EXIT='exit',  # 退出
-        CHAT='nlp_chat',  # 聊天
-        AGE='face_age',  # 颜龄
-        STICKER='face_sticker',  # 大头贴
-        MERGE='face_merge',  # 人脸融合
-        DECORATION='face_decoration',  # 变妆
-        COSMETIC='face_cosmetic',  # 美妆
-        FILTER='image_filter',  # 滤镜
-        IMG_TO_TEXT='img_to_text',  # 看图说话
-        MENU='menus',  # 菜单.
-    )
+    command_type = Enum('Command', 'CHAT AGE STICKER MERGE DECORATION COSMETIC FILTER VISION MENUS EXIT')
 
     def __init__(self, api_id, api_key, plugins):
         self.plugins = plugins
         self.ai = AiPlat(api_id, api_key)
         self._bootstrap_plugins()
         self.cache = FileSystemCache('/tmp/wechat-bot-cache')
+        self.available_cmds = OrderedDict()
         self.client = None
+        self.register_default_cmd()
+
+    def register_default_cmd(self):
+
+        # 聊天功能
+        self.register_cmd(self.command_type.CHAT,
+                          CommandItem(re='(?i)^chat$', method=(self, 'nlp_chat'), desc='* Chat : 聊天/默认行为'))
+
+        # 颜龄功能
+        self.register_cmd(self.command_type.AGE,
+                          CommandItem(re='(?i)^a(ge)?$', method=(self, 'face_age'), desc='* A(age) : 查看颜龄'))
+
+        # 大头贴功能
+        self.register_cmd(self.command_type.STICKER,
+                          CommandItem(re='(?i)^s(ticker)?$', method=(self, 'face_sticker'),
+                                      desc='* S(sticker) : 大头贴'))
+
+        # 人脸融合
+        self.register_cmd(self.command_type.MERGE,
+                          CommandItem(re='(?i)^m(erge)?$', method=(self, 'face_merge'), desc='* M(merge) : 人脸融合'))
+
+        # 人脸变妆
+        self.register_cmd(self.command_type.DECORATION,
+                          CommandItem(re='(?i)^d(ecoration)?$', method=(self, 'face_decoration'),
+                                      desc='* D(decoration) : 人脸变妆'))
+        # 人脸美妆
+        self.register_cmd(self.command_type.COSMETIC,
+                          CommandItem(re='(?i)^c(osmetic)?$', method=(self, 'face_cosmetic'),
+
+                                      desc='* C(cosmetic) : 人脸美妆'))
+        # 滤镜
+        self.register_cmd(self.command_type.FILTER,
+                          CommandItem(re='(?i)^f(ilter)?$', method=(self, 'image_filter'),
+                                      desc='* F(filter) : 图像滤镜'))
+        # 看图说话
+        self.register_cmd(self.command_type.VISION,
+                          CommandItem(re='(?i)^v(ision)?$',
+                                      method=(self, 'image_to_text'),
+                                      desc='* V(vision) : 看图说话'))
+        # 菜单
+        self.register_cmd(self.command_type.MENUS,
+                          CommandItem(re='(?i)^menu$',
+                                      method=(self, 'menus'),
+                                      desc='* Menu : 显示此菜单'))
+        # 退出.
+        self.register_cmd(self.command_type.EXIT,
+                          CommandItem(re=ur'(?iu)^(e(xit)?|\u9000\u51fa)$',
+                                      method=(self, 'exit'),
+                                      desc='* E(exit) : 退出上下文'))
+
+    def register_cmd(self, cmd_type, cmd):
+        if hasattr(cmd_type, 'name'):
+            cmd_type = cmd_type.name
+        self.available_cmds[cmd_type] = cmd
+
+    def unregister_cmd(self, cmd_type):
+        if cmd_type in self.available_cmds:
+            del self.available_cmds[cmd_type]
 
     @property
     def wechat_client(self):
@@ -108,13 +162,8 @@ class AI(object):
             # 本次步骤已经结束了,删除当前指令
             self.cache.delete(msg.source)
         else:
-            reply = create_reply(u'%s, 重新上传一张图试试吧!' %resp['msg'], msg)
+            reply = create_reply(u'%s, 重新发送一张图试试吧!' % resp['msg'], msg)
         return reply
-
-    def face_age(self, msg):
-        img = self.get_current_img(msg)
-        resp = self.ai.ptu_faceage(img)
-        return self.image_resp(msg, resp)
 
     def reply_help_img(self, msg, file):
         mid = self._media_upload(media_file=file)
@@ -125,10 +174,19 @@ class AI(object):
             message=msg
         )
 
+    def face_age(self, msg):
+        img = self.get_current_img(msg)
+        if not img:
+            return u'请先发送一张有人脸的图片哦'
+        resp = self.ai.ptu_faceage(img)
+        return self.image_resp(msg, resp)
+
     def face_sticker(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
             return self.reply_help_img(msg, file=open('data/sticker.png', 'rb'))
         img = self.get_current_img(msg)
+        if not img:
+            return u'请先发送一张有人脸的图片哦'
         resp = self.ai.ptu_facesticker(img, msg.content)
         return self.image_resp(msg, resp)
 
@@ -136,6 +194,8 @@ class AI(object):
         if msg.type != 'text' or not msg.content.isdigit():
             return self.reply_help_img(msg, file=open('data/merge.png', 'rb'))
         img = self.get_current_img(msg)
+        if not img:
+            return u'请先发送一张有人脸的图片哦'
         resp = self.ai.ptu_facemerge(img, msg.content)
         return self.image_resp(msg, resp)
 
@@ -143,6 +203,8 @@ class AI(object):
         if msg.type != 'text' or not msg.content.isdigit():
             return self.reply_help_img(msg, file=open('data/decoration.png', 'rb'))
         img = self.get_current_img(msg)
+        if not img:
+            return u'请先发送一张有人脸的图片哦'
         resp = self.ai.ptu_facedecoration(img, msg.content)
         return self.image_resp(msg, resp)
 
@@ -150,20 +212,26 @@ class AI(object):
         if msg.type != 'text' or not msg.content.isdigit():
             return self.reply_help_img(msg, file=open('data/cosmetic.png', 'rb'))
         img = self.get_current_img(msg)
+        if not img:
+            return u'请先发送一张有人脸的图片哦'
         resp = self.ai.ptu_facecosmetic(img, msg.content)
         return self.image_resp(msg, resp)
 
-    def img_to_text(self, msg):
+    def image_to_text(self, msg):
         img = self.get_current_img(msg)
+        if not img:
+            return u'请先发送图片给我哦'
         resp = self.ai.vision_image(img, msg.source)
         text = resp['data']['text'] if resp['ret'] == 0 else resp['msg']
         self.cache.delete(msg.source)
         return text
 
-    def img_filter(self, msg):
+    def image_filter(self, msg):
         if msg.type != 'text' or not msg.content.isdigit():
             return self.reply_help_img(msg, file=open('data/filter.png', 'rb'))
         img = self.get_current_img(msg)
+        if not img:
+            return u'请先发送图片给我哦'
         resp = self.ai.ptu_imagefilter(img, msg.content)
         return self.image_resp(msg, resp)
 
@@ -185,37 +253,33 @@ class AI(object):
 
     def parse_command(self, msg):
 
-        # 优先检查是否需要退出.
-        if msg.type == 'text' and (msg.content.lower() in ['exit', u'退出']):
-            return self.COMMANDS.EXIT
+        # 优先检查是否需要退出
+        exit_cmd = self.available_cmds.get(self.command_type.EXIT.name)
+        if not exit_cmd:
+            raise LogicException('Command: %s is required!' % self.command_type.EXIT)
 
-        command = self.cache.get(msg.source)
-        if command:
-            logging.debug('command from history(cached): %s', command)
-            return command
+        if msg.type == 'text' and re.match(exit_cmd.re, msg.content):
+            return exit_cmd
 
-        command = self.COMMANDS.CHAT
+        cmd_type_name = self.cache.get(msg.source)
+        if cmd_type_name:
+            logging.debug('God command:%s from history(cached)', cmd_type_name)
+            return self.available_cmds[cmd_type_name]
+
+        cmd_type_name = self.command_type.CHAT.name
         if msg.type == 'text':
-            content = msg.content.lower()
-            if content == u'颜龄' or content == 'age':
-                command = self.COMMANDS.AGE
-            elif content == u'大头贴' or content == 'sticker':
-                command = self.COMMANDS.STICKER
-            elif content == u'人脸融合' or content == 'merge':
-                command = self.COMMANDS.MERGE
-            elif content == u'聊天' or content == 'chat':
-                command = self.COMMANDS.CHAT
-            elif content == u'看图说话' or content == 'img2text':
-                command = self.COMMANDS.IMG_TO_TEXT
-            elif content == u'退出' or content == 'exit':
-                command = self.COMMANDS.EXIT
+            content = msg.content
+            for name, cmd in self.available_cmds.iteritems():
+                if re.match(cmd.re, content):
+                    cmd_type_name = name
+                    break
         elif msg.type == 'image':
-            command = self.COMMANDS.MENU
+            cmd_type_name = self.command_type.MENUS.name
 
-        # 记录下来当前的命令.
-        self.cache.set(msg.source, command)
-        logging.debug('God command:%s from msg:%s', command, msg)
-        return command
+        # 记录下来当前的命令名字
+        self.cache.set(msg.source, cmd_type_name)
+        logging.debug('Got command:%s from msg', cmd_type_name)
+        return self.available_cmds.get(cmd_type_name)
 
     def menus(self, msg):
         """菜单,当用户发送图片来的时候默认激发此菜单"""
@@ -223,17 +287,12 @@ class AI(object):
         if msg.type == 'image':
             self.cache.set(msg.source + '_img_url', msg.image)
             resp = u'收到一张图，'
-        menus = [
-            u'* 颜龄 : 查看您的年龄',
-            u'* 看图说话 : AI识别图的内容',
-            u'* 大头贴 : 选择数字(1-30)的一种大头贴特效',
-            u'* 滤镜 : 为您的照片增加一层滤镜',
-            u'* 人脸融合 : 古装/科幻等特效(特效支持1-50的范围)',
-            u'* 退出 : 退出上下文',
-        ]
         # 菜单功能正常结束.
         self.cache.delete(msg.source)
-        return u'%s你是要我做什么呢?\n\n%s' % (resp, '\n'.join(menus))
+        return u'%s你是要我做什么呢? 请输入菜单对应的首字母/单词\n\n%s' % (resp,
+                                                      '\n'.join(
+                                                          cmd.desc for cmd in self.available_cmds.values()).decode(
+                                                          'utf-8'))
 
     def response(self, request):
         msg = parse_message(request.data)
@@ -246,11 +305,36 @@ class AI(object):
                 logging.debug('消息没有返回,跳过用此插件(%s)处理', plugin.__name__)
 
         command = self.parse_command(msg)
-        reply = getattr(self, command, self.nlp_chat)(msg)
+        if not command:
+            logging.error('Unsupported Command: %s, Try to use default command(Chat)', command)
+            command = self.nlp_chat
+        else:
+            command = getattr(*command.method)
+        reply = command(msg)
         return self.create_resp(reply, msg)
 
 
 if __name__ == '__main__':
-    import plugins as p
+    FakeMsg = namedtuple('FakeMsg', ['content', 'type', 'source'])
+    msg = FakeMsg(content=u'test_callback', type='text', source='shellvon')
+    ai = AI('', '', [])
 
-    print 'loaded plugins:', load_plugins(p)
+    import sys
+
+    this_md = sys.modules[__name__]
+
+
+    def hello_world(msg):
+        return 'Got msg', msg
+
+
+    ai.register_cmd('test_callback', CommandItem(desc='Test Register Cmd', re='(?iu)test_callback', method=(
+        this_md, 'hello_world', lambda x: sys.stdout.write('Hello ' + str(x)))))  # 第三个参数是可选的默认函数
+
+    cmd = ai.parse_command(msg)
+    if cmd:
+        print 'Got Cmd:', cmd
+        callback = getattr(*ai.parse_command(msg).method)
+        print callback(msg)
+    else:
+        print 'No available command to process it.'
