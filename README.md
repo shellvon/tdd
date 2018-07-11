@@ -14,6 +14,7 @@
 + 电影检索(Plugins) -By [torrentkitty](https://www.torrentkitty.tv)
 + 斗图(Plugins)  -By [斗图啦](https://www.doutula.com/apidoc)
 + 淘宝优惠券(Plugins) -By [阿里妈妈](https://www.alimama.com/index.htm), 部分代码借鉴至:[@xsren](https://github.com/xsren/wx_taobao_fanli)
++ VIP视频解析(Plugins) -By [网络资源](https://iodefog.github.io/text/mviplist.json)
 
 # 技术方案:
 
