@@ -19,20 +19,21 @@ PLATFORM_LST = [
 PLAYER_LST = [
     {"name": "万能接口5", "url": "http://jx.vgoodapi.com/jx.php?url="},
     {"name": "5月-1", "url": "http://www.82190555.com/index/qqvod.php?url="},
-    {"name": "5月-2", "url": "http://jiexi.92fz.cn/player/vip.php?url="},
+    # {"name": "5月-2", "url": "http://jiexi.92fz.cn/player/vip.php?url="},
     {"name": "5月-3", "url": "http://api.wlzhan.com/sudu/?url="},
-    {"name": "5月-4", "url": "http://beaacc.com/api.php?url="},
-    {"name": "5月-8", "url": "http://api.visaok.net/?url="},
+    # {"name": "5月-4", "url": "http://beaacc.com/api.php?url="},
+    # {"name": "5月-8", "url": "http://api.visaok.net/?url="},
     {"name": "5月-9", "url": "http://api.xyingyu.com/?url="},
-    {"name": "5月-10", "url": "http://api.greatchina56.com/?url="},
+    # {"name": "5月-10", "url": "http://api.greatchina56.com/?url="},
     {"name": "5月-11", "url": "http://jx.618g.com/?url="},
     {"name": "5月-12", "url": "http://api.baiyug.vip/index.php?url="},
     {"name": "5月-14", "url": "http://api.xyingyu.com/?url="},
-    {"name": "5月-15", "url": "http://api.greatchina56.com/?url="},
+    # {"name": "5月-15", "url": "http://api.greatchina56.com/?url="},
     {"name": "5月-16", "url": "http://api.baiyug.vip/index.php?url="},
-    {"name": "5月-17", "url": "http://api.visaok.net/?url="}, {"name": "5月-18", "url": "http://jx.618g.com/?url="},
-    {"name": "5月-20", "url": "hhttp://api.baiyug.cn/vip/?url="},
-    {"name": "5月-21", "url": "http://jiexi.071811.cc/jx2.php?url="},
+    {"name": "5月-17", "url": "http://api.visaok.net/?url="},
+    {"name": "5月-18", "url": "http://jx.618g.com/?url="},
+    # {"name": "5月-20", "url": "hhttp://api.baiyug.cn/vip/?url="},
+    # {"name": "5月-21", "url": "http://jiexi.071811.cc/jx2.php?url="},
     {"name": "5月-22", "url": "http://www.82190555.com/index/qqvod.php?url="},
     {"name": "5月-24", "url": "http://www.82190555.com/index/qqvod.php?url="},
     {"name": "4.21-2", "url": "http://qtv.soshane.com/ko.php?url="},
@@ -43,14 +44,15 @@ PLAYER_LST = [
     {"name": "六六视频", "url": "http://qtv.soshane.com/ko.php?url="},
     {"name": "超清接口1_0", "url": "http://www.52jiexi.com/tong.php?url="},
     {"name": "超清接口1_1", "url": "http://www.52jiexi.com/yun.php?url="},
-    {"name": "超清接口2", "url": "http://jiexi.92fz.cn/player/vip.php?url="},
+    # {"name": "超清接口2", "url": "http://jiexi.92fz.cn/player/vip.php?url="},
     {"name": "品优解析", "url": "http://api.pucms.com/xnflv/?url="},
     {"name": "无名小站", "url": "http://www.82190555.com/index/qqvod.php?url="},
-    {"name": "腾讯可用，百域阁视频", "url": "http://api.baiyug.cn/vip/index.php?url="},
+    # {"name": "腾讯可用，百域阁视频", "url": "http://api.baiyug.cn/vip/index.php?url="},
     {"name": "腾讯可用，线路三(云解析)", "url": "http://jiexi.92fz.cn/player/vip.php?url="},
     {"name": "腾讯可用，金桥解析", "url": "http://jqaaa.com/jx.php?url="},
-    {"name": "线路四（腾讯暂不可用）", "url": "http://api.nepian.com/ckparse/?url="},
-    {"name": "线路五", "url": "http://aikan-tv.com/?url="}, {"name": "花园影视（可能无效）", "url": "http://j.zz22x.com/jx/?url="},
+    # {"name": "线路四（腾讯暂不可用）", "url": "http://api.nepian.com/ckparse/?url="},
+    {"name": "线路五", "url": "http://aikan-tv.com/?url="},
+    # {"name": "花园影视（可能无效）", "url": "http://j.zz22x.com/jx/?url="},
     {"name": "花园影视1", "url": "http://j.88gc.net/jx/?url="},
     {"name": "线路一(乐乐视频解析)", "url": "http://www.662820.com/xnflv/index.php?url="},
     {"name": "1717ty", "url": "http://1717ty.duapp.com/jx/ty.php?url="},
@@ -95,7 +97,8 @@ def match(msg, bot=None):
 
 def response(msg, bot=None):
     source = random.choice(PLAYER_LST)
-    return '帮你找了一个播放地址: {url}{link} , Powered By: {name}点击试试吧!(不行就再发我我重新找)'.format(link=msg.content, **source)
+    return '帮您找了一个在线播放地址: {url}{link} , Powered By: {name}点击试试吧!\n\n注意:(如果提示被被封请复制此链接至浏览器打开或者重新尝试新的)'.format(
+        link=msg.content, **source)
 
 
 def main(url):
