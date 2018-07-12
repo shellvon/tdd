@@ -3,13 +3,14 @@
 import logging
 
 from flask import Flask, abort, request
+from wechatpy import create_reply
 from wechatpy.utils import check_signature
-from wechatpy.exceptions import InvalidSignatureException, WeChatClientException
+from wechatpy.exceptions import InvalidSignatureException
 from wechatpy.client import WeChatClient
 
 import plugins
 import setting
-from bot import AI, load_plugins
+from bot import AI, load_plugins, CommandItem
 
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
@@ -26,9 +27,35 @@ app = create_app('setting')
 
 bot = AI(setting.TENCENT_AI_APP_ID, setting.TENCENT_AI_APP_KEY, load_plugins(plugins))
 
-wechat_client = WeChatClient(setting.WECHAT_APP_ID, setting.WECHAT_APP_SECRET)
-# WTF.
-bot.wechat_client = wechat_client
+
+def tuling_bot(bot):
+    from hashlib import md5
+    from tuling import API
+    http = API(setting.TULING_API_KEY)
+
+    def tuling_chat_command(message):
+        user_id = md5(message.source).hexdigest()
+        if message.type != 'text':
+            return u'仅支持纯文字聊天'
+        resp = http.request(user_id, text=message.content)
+        if 'news' in resp:
+            # 新闻
+            articles = [{'title': el['name'] + el['info'], 'description': '%s : %s' % (resp['text'], el['name']),
+                         'image': el['icon'], 'url': el['detailurl']} for el in resp['news'][:3]]
+            return create_reply(articles, message)
+        elif 'url' in resp:
+            # 链接类消息(航班/路线/百科等)
+            return create_reply('{text}:\n{url}'.format(**resp['text']), message)
+        elif 'image' in resp:
+            logging.error('Image Repsonse....')
+        elif 'video' in resp or 'voice' in resp:
+            logging.error('Media Repsonse....')
+        else:
+            logging.error('Unsupported Repsonse....')
+
+        return create_reply(resp['text'], message)
+
+    return tuling_chat_command
 
 
 @app.route('/wechat-bot', methods=['GET', 'POST'])
@@ -51,6 +78,13 @@ def wechat():
 
 
 def main():
+    wechat_client = WeChatClient(setting.WECHAT_APP_ID, setting.WECHAT_APP_SECRET)
+    # Dirty hack
+    bot.wechat_client = wechat_client
+    # 注册一个新的聊天机器人
+    bot.register_cmd('TDD', CommandItem(desc='* TDD: 使用淘逗逗2号机器人聊天',
+                                        re='(?i)^t(dd)?$',
+                                        method=tuling_bot(bot)))
     app.run(host=app.config.get('HOST'))
 
 

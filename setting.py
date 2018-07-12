@@ -16,6 +16,7 @@ WECHAT_APP_SECRET = ''
 TENCENT_AI_APP_ID = ''
 TENCENT_AI_APP_KEY = ''
 
+TULING_API_KEY = ''
 # # Plugins setting
 
 TB_COOKIE_STR = ''

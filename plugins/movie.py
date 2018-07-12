@@ -31,7 +31,7 @@ def response(msg, bot=None):
     result = search(keyword)
     if not result:
         return u'找不到您要的资源啦😢'
-    return u'======\n'.join([u'【资源】: %s\n 【Key】: %s' % (el[1].decode('utf8'), el[0]) for el in result])
+    return u'======\n'.join([u'【资源】: %s\n 【Key】: %s\n' % (el[1].decode('utf8'), el[0]) for el in result])
 
 
 def main():

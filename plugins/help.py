@@ -5,7 +5,7 @@ import re
 __plugin__ = 'help'
 __description__ = '输入帮助/文档等关键词查看帮助信息'
 
-REGEX = re.compile(u'^(help|帮助|菜单|功能|文档)$', re.I | re.U)
+REGEX = re.compile(u'^(help|帮助|功能|文档)$', re.I | re.U)
 
 # current plugin priority. optional. default is 0
 PRIORITY = 1
@@ -31,4 +31,4 @@ def match(msg, bot=None):
 def response(msg, bot=None):
     global all_plugins_info
     plugins = '\n\n'.join(['插件:{plugin}\n描述:{desc}'.format(**p) for p in all_plugins_info])
-    return '您好,目前我们支持的功能插件有:\n%s' % plugins
+    return '您好,目前支持的系统功能您可以输入 Menu 进行查看， 另外，目前我们支持的功能插件有:\n%s' % plugins

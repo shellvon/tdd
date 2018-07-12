@@ -104,6 +104,9 @@ class AI(object):
         if cmd_type in self.available_cmds:
             del self.available_cmds[cmd_type]
 
+    def get_cmd(self, cmd_type, default=None):
+        return self.available_cmds.get(cmd_type, default)
+
     @property
     def wechat_client(self):
         return self.client
@@ -308,8 +311,11 @@ class AI(object):
         if not command:
             logging.error('Unsupported Command: %s, Try to use default command(Chat)', command)
             command = self.nlp_chat
+        elif callable(command.method):
+            command = command.method
         else:
             command = getattr(*command.method)
+
         reply = command(msg)
         return self.create_resp(reply, msg)
 
