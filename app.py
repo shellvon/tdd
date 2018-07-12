@@ -55,8 +55,6 @@ def tuling_bot(bot):
             logging.error('Image Repsonse....')
         elif 'video' in resp or 'voice' in resp:
             logging.error('Media Repsonse....')
-        else:
-            logging.error('Unsupported Repsonse....')
 
         return create_reply(resp['text'], message)
 
