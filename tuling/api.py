@@ -83,8 +83,6 @@ class API(object):
             return
         if len(result) > 1:
             logging.error('同一API请求出现多个Group')
-        import json
-        print json.dumps(result[0], ensure_ascii=False, indent=4)
         return result[0]
 
 

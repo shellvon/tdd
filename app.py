@@ -34,9 +34,14 @@ def tuling_bot(bot):
     http = API(setting.TULING_API_KEY)
 
     def tuling_chat_command(message):
+        bot.cache.set(message.source, 'TDD')  # 别过期.
         user_id = md5(message.source).hexdigest()
         if message.type != 'text':
             return u'仅支持纯文字聊天'
+
+        if message.content.lower() == 't' or message.content.lower() == 'tdd':
+            return u'Hello,我是淘逗逗的姐姐^_^, 谢谢你把我召唤出来'
+
         resp = http.request(user_id, text=message.content)
         if 'news' in resp:
             # 新闻
@@ -45,7 +50,7 @@ def tuling_bot(bot):
             return create_reply(articles, message)
         elif 'url' in resp:
             # 链接类消息(航班/路线/百科等)
-            return create_reply('{text}:\n{url}'.format(**resp['text']), message)
+            return create_reply(u'{text}:\n{url}'.format(**resp), message)
         elif 'image' in resp:
             logging.error('Image Repsonse....')
         elif 'video' in resp or 'voice' in resp:
@@ -82,7 +87,7 @@ def main():
     # Dirty hack
     bot.wechat_client = wechat_client
     # 注册一个新的聊天机器人
-    bot.register_cmd('TDD', CommandItem(desc='* TDD: 使用淘逗逗2号机器人聊天',
+    bot.register_cmd('TDD', CommandItem(desc='* T(dd): 使用淘逗逗2号机器人聊天',
                                         re='(?i)^t(dd)?$',
                                         method=tuling_bot(bot)))
     app.run(host=app.config.get('HOST'))
