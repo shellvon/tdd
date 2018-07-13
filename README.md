@@ -10,6 +10,7 @@
 目前公众号内引入的功能:
 
 + 智能闲聊 -By [腾讯AI-自然语言处理](https://ai.qq.com/doc/nlpchat.shtml)
++ 闲聊/百度/菜谱/搜索/笑话 -By [图灵机器人](http://www.tuling123.com/)
 + 图像美肤/融合/化妆/年龄检测 -By [腾讯AI-计算机视觉](https://ai.qq.com/doc/facecosmetic.shtml)
 + 电影检索(Plugins) -By [torrentkitty](https://www.torrentkitty.tv)
 + 斗图(Plugins)  -By [斗图啦](https://www.doutula.com/apidoc)

@@ -68,7 +68,7 @@ def response(msg, bot=None):
         if bot:
             # 退出斗图.
             bot.cache.clear()
-        return u'我败了,无图可战'
+        return u'我败了,无图可战<系统将自动退出斗图模式>'
     try:
         result = bot.wechat_client.media.upload(media_type='image', media_file=result)
         mid = result['media_id']

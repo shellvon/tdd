@@ -4,7 +4,7 @@ import re
 import requests
 
 __plugin__ = '检索'
-__description__ = '输入检索 <电影资源名/番号> 进行查询'
+__description__ = '输入<检索 关键词> 进行查询,其中关键词可以是演员名/电影名等信息(最多返回3条信息)'
 
 # current plugin priority. optional. default is 0
 PRIORITY = 10

@@ -3,7 +3,7 @@
 import re
 
 __plugin__ = 'help'
-__description__ = '输入帮助/文档等关键词查看帮助信息'
+__description__ = '输入<help>/<帮助>/<文档>/<功能>等尖括号内任意一单词查看此帮助信息'
 
 REGEX = re.compile(u'^(help|帮助|功能|文档)$', re.I | re.U)
 

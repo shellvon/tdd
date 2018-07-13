@@ -4,7 +4,7 @@
 import re
 
 __plugin__ = 'hello_world'
-__description__ = '发送hello,回复你好呀'
+__description__ = '发送<hello>,回复[你好呀^_^]'
 
 HELLO_REGEX = re.compile('^hello$', re.I)
 

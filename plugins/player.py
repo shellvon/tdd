@@ -75,7 +75,7 @@ PLAYER_LST = [
 ]
 
 __plugin__ = '播放器(VIP去广告)'
-__description__ = '直接发送需要播放的视频地址[%s]即可,如果不行请尝试重复发送' % ('|'.join(p['name'] for p in PLATFORM_LST))
+__description__ = '直接发送需要播放的视频地址[%s]即可,如果不行请尝试重复发送(每次返回的地址随机)' % ('|'.join(p['name'] for p in PLATFORM_LST))
 
 URL_REGEX = re.compile(r'https?://[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,5}([-a-zA-Z0-9@:%_\+.~#?&//=]*)$')
 

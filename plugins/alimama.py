@@ -16,7 +16,7 @@ from setting import TB_COOKIE_STR
 
 
 __plugin__ = '优惠券'
-__description__ = '将商品消息发送至公众号'
+__description__ = '将淘宝商品消息发送至公众号'
 
 
 def match(msg, bot=None):

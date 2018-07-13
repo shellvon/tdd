@@ -37,10 +37,10 @@ def tuling_bot(bot):
         bot.cache.set(message.source, 'TDD')  # 别过期.
         user_id = md5(message.source).hexdigest()
         if message.type != 'text':
-            return u'仅支持纯文字聊天'
+            return u'仅支持纯文字聊天[当前模式为TDD聊天,您可以尝试输入Exit退出之后执行其他命令]'
 
         if message.content.lower() == 't' or message.content.lower() == 'tdd':
-            return u'Hello,我是淘逗逗的姐姐^_^, 谢谢你把我召唤出来'
+            return u'Hello,我是淘逗逗的姐姐^_^, 谢谢你把我召唤出来~你不让我exit我是不会退的哦~'
 
         resp = http.request(user_id, text=message.content)
         if 'news' in resp:
