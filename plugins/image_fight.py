@@ -4,12 +4,11 @@ import re
 import random
 import requests
 
-
 from wechatpy.replies import ImageReply
 from wechatpy.exceptions import WeChatClientException
 
 __plugin__ = '斗图'
-__description__ = '输入<斗图> 或者<斗图 关键词> 开启斗图(用户可回复图/文字),如果不玩了请输入<exit>'
+__description__ = '输入<斗图> 或者<斗图 关键词> 开启斗图(用户可回复图/文字),如果不玩了请输入<exit> 或者<Q> (均不包含尖括号)'
 
 REGEX = re.compile(u'^斗图(\s\S+)?$', re.I | re.U)
 
@@ -19,7 +18,7 @@ PRIORITY = 1
 
 def match(msg, bot=None):
     # 判断是否退出
-    if msg.type == 'text' and (msg.content == u'退出' or msg.content.lower() == 'exit'):
+    if msg.type == 'text' and (msg.content == u'退出' or msg.content.lower() == 'exit' or msg.content.lower() == 'q'):
         return False
     # 判断当前的command是否为斗图.
     if bot.cache.get(msg.source) == 'img_fight':
@@ -38,7 +37,7 @@ def search(keyword=None):
     payloads = {
         'keyword': keyword,
         'mime': 0,
-        'page': 1, # random.choice([1,2,3]),
+        'page': 1,  # random.choice([1,2,3]),
     }
     resp = requests.get(api, params=payloads, headers={
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:43.0) Gecko/20100101 Firefox/43.0'
@@ -74,7 +73,7 @@ def response(msg, bot=None):
         mid = result['media_id']
         return ImageReply(message=msg, media_id=mid)
     except WeChatClientException, e:
-        return u'我败了.....'
+        return u'我败了.....,如果需要退出请输入字母 Q'
 
 
 if __name__ == '__main__':

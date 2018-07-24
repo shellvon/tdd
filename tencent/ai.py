@@ -27,6 +27,7 @@ class AiPlat(object):
         self.req = requests.Session()
         self.end_point = ''
         print app_id, app_key
+
     @staticmethod
     def code_to_msg(code):
         """
@@ -225,7 +226,6 @@ class AiPlat(object):
 
 def main():
     api = AiPlat('1107021444', 'Zs4iYs0ghKRh0nZ0')
-
 
     import json
 

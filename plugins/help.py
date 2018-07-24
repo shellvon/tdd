@@ -31,4 +31,4 @@ def match(msg, bot=None):
 def response(msg, bot=None):
     global all_plugins_info
     plugins = '\n\n'.join(['插件:{plugin}\n描述:{desc}'.format(**p) for p in all_plugins_info])
-    return '您好,目前支持的系统功能您可以输入 Menu 进行查看， 另外，目前我们支持的功能插件有:\n%s' % plugins
+    return '您好,目前支持的系统功能您可以输入 <菜单> 或者<Menu> 进行查看(仅输入尖括号内的单词)， 另外，目前我们支持的功能插件有:\n%s' % plugins

@@ -86,7 +86,7 @@ class AI(object):
                                       desc='* V(vision) : 看图说话'))
         # 菜单
         self.register_cmd(self.command_type.MENUS,
-                          CommandItem(re='(?i)^menu$',
+                          CommandItem(re=ur'(?i)^(menu|\u83dc\u5355)$',
                                       method=(self, 'menus'),
                                       desc='* Menu : 显示此菜单'))
         # 退出.
