@@ -6,14 +6,15 @@ import random
 # 资源来自: https://iodefog.github.io/text/mviplist.json
 
 PLATFORM_LST = [
-    {"name": "爱奇艺", "url": "http://www.iqiyi.com/"},
-    {"name": "腾讯视频", "url": "https://v.qq.com/"},
-    {"name": "芒果", "url": "https://www.mgtv.com/"},
-    {"name": "优酷", "url": "https://www.youku.com/"},
-    {"name": "乐视视频", "url": "https://www.le.com/"},
-    {"name": "搜狐视频", "url": "https://tv.sohu.com/"},
-    {"name": "52影院", "url": "http://www.52xsba.com/"},
-    {"name": "4080新视觉影院", "url": "http://www.yy4080.com/"}
+    {"name": "爱奇艺", "regex": r"^http://(a|www)\.iqiyi\.com/"},
+    {"name": "腾讯视频", "regex": r"^https://(m\.)?v\.qq\.com/"},
+    {"name": "芒果", "regex": r"^https://.*.mgtv\.com/"},
+    {"name": "优酷", "regex": r"^https://.*.youku.com/"},
+    {"name": "乐视视频", "regex": r"^https://.*.le(tv)?.com/"},
+    {"name": "搜狐视频", "regex": r"^https://.*\.sohu\.com/"},
+    {"name": "52影院", "regex": r"^http://.*\.52xsba\.com/"},
+    {"name": "土豆", "regex": r"^http://.*\.tudou\.com"},
+    {"name": "音悦台", "regex": r"^http://.*v\.yinyuetai\.com/video/"},
 ]
 
 PLAYER_LST = [
@@ -89,7 +90,7 @@ def match(msg, bot=None):
         return False
 
     for p in PLATFORM_LST:
-        if p['url'] in content:
+        if re.match(p['regex'], content, re.IGNORECASE):
             return True
 
     return False
