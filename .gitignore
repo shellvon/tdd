@@ -1,3 +1,4 @@
 .idea/
 *.pyc
 .python-version
+data/activity.json
